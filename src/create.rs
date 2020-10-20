@@ -28,7 +28,6 @@ impl RollbackableOperation for CreateFile {
 	}
 }
 
-
 pub struct CreateDirectory {
 	path: String,
 }
@@ -51,17 +50,34 @@ impl RollbackableOperation for CreateDirectory {
 	}
 }
 
-
 #[cfg(test)]
 mod tests {
+	use std::path::Path;
 	use super::*;
 
-	const FILE_SOURCE: &str = "./test/create/file/out.txt";
+	const FILE_SOURCE: &str = "./create_file_source.txt";
 
 	#[test]
-	fn create_file_execute_rollback() {
+	fn create_file_works() {
 		let mut op = CreateFile::new(FILE_SOURCE);
+
+		assert_eq!(false, Path::new(FILE_SOURCE).exists());
 		assert_eq!((), op.execute().unwrap());
+		assert_eq!(true, Path::new(FILE_SOURCE).exists());
 		assert_eq!((), op.rollback().unwrap());
+		assert_eq!(false, Path::new(FILE_SOURCE).exists());
+	}
+
+	const DIR_SOURCE: &str = "./create_dir";
+
+	#[test]
+	fn create_dir_works() {
+		let mut op = CreateDirectory::new(DIR_SOURCE);
+
+		assert_eq!(false, Path::new(DIR_SOURCE).exists());
+		assert_eq!((), op.execute().unwrap());
+		assert_eq!(true, Path::new(DIR_SOURCE).exists());
+		assert_eq!((), op.rollback().unwrap());
+		assert_eq!(false, Path::new(DIR_SOURCE).exists());
 	}
 }

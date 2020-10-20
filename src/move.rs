@@ -11,7 +11,7 @@ pub struct MoveOperation {
 	dest: String,
 }
 
-impl MoveFile {
+impl MoveOperation {
 	pub fn new<S: Into<String>>(source: S, dest: S) -> Self {
 		Self {
 			source: source.into(),
@@ -20,7 +20,7 @@ impl MoveFile {
 	}
 }
 
-impl RollbackableOperation for MoveFile {
+impl RollbackableOperation for MoveOperation {
 	fn execute(&mut self) -> io::Result<()> {
 		fs::rename(&self.source, &self.dest)
 	}
@@ -30,19 +30,72 @@ impl RollbackableOperation for MoveFile {
 	}
 }
 
-
-
 #[cfg(test)]
 mod tests {
+	use std::path::Path;
+	use std::fs::{self, File};
+
 	use super::*;
 
-	const FILE_SOURCE: &str = "./test/move/file/out.txt";
-	const FILE_DEST: &str = "./test/move/file/inner/out.txt";
+	const FILE_SOURCE: &str = "./move_file_source.txt";
+	const FILE_DEST_DIR: &str = "./move_file_out_dir";
+	const FILE_DEST: &str = "./move_file_out_dir/move_file_source.txt";
+
+	fn file_setup() -> std::io::Result<()> {
+		File::create(FILE_SOURCE)?;
+		fs::create_dir_all(FILE_DEST_DIR)
+	}
 
 	#[test]
-	fn move_file_execute_rollback() {
+	#[allow(unused_must_use)]
+	fn move_file_works() {
+		assert_eq!((), file_setup().unwrap());
+
 		let mut op = MoveFile::new(FILE_SOURCE, FILE_DEST);
+
+		assert_eq!(true, Path::new(FILE_SOURCE).exists());
+		assert_eq!(false, Path::new(FILE_DEST).exists());
+
 		assert_eq!((), op.execute().unwrap());
+		assert_eq!(false, Path::new(FILE_SOURCE).exists());
+		assert_eq!(true, Path::new(FILE_DEST).exists());
+
 		assert_eq!((), op.rollback().unwrap());
+		assert_eq!(true, Path::new(FILE_SOURCE).exists());
+		assert_eq!(false, Path::new(FILE_DEST).exists());
+
+		fs::remove_file(FILE_SOURCE);
+		fs::remove_dir_all(FILE_DEST_DIR);
+	}
+
+	const DIR_SOURCE: &str = "./move_dir_source";
+	const DIR_DIR: &str = "./move_dir_dest_dir";
+	const DIR_DEST: &str = "./move_dir_dest_dir/move_dir_source";
+
+	fn dir_setup() -> std::io::Result<()> {
+		fs::create_dir_all(DIR_SOURCE)?;
+		fs::create_dir_all(DIR_DIR)
+	}
+
+	#[test]
+	#[allow(unused_must_use)]
+	fn move_dir_works() {
+		assert_eq!((), dir_setup().unwrap());
+
+		let mut op = MoveDirectory::new(DIR_SOURCE, DIR_DEST);
+
+		assert_eq!(true, Path::new(DIR_SOURCE).exists());
+		assert_eq!(false, Path::new(DIR_DEST).exists());
+
+		assert_eq!((), op.execute().unwrap());
+		assert_eq!(false, Path::new(DIR_SOURCE).exists());
+		assert_eq!(true, Path::new(DIR_DEST).exists());
+
+		assert_eq!((), op.rollback().unwrap());
+		assert_eq!(true, Path::new(DIR_SOURCE).exists());
+		assert_eq!(false, Path::new(DIR_DEST).exists());
+
+		fs::remove_dir_all(DIR_SOURCE);
+		fs::remove_dir_all(DIR_DIR);
 	}
 }

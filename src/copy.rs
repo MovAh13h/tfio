@@ -86,29 +86,67 @@ impl Drop for CopyDirectory {
 	}
 }
 
-
 #[cfg(test)]
 mod tests {
+	use std::path::Path;
+	use std::fs::{self, File};
 	use super::*;
 
-	const FILE_SOURCE: &str = "./test/copy/file/out.txt";
-	const FILE_DEST: &str = "./test/copy/file/inner/out.txt";
+	const FILE_SOURCE: &str = "./copy_file_source.txt";
+	const DEST_DIR: &str = "./copy_file_dir";
+	const FILE_DEST: &str = "./copy_file_dir/copy_file_source.txt";
 
-	#[test]
-	fn copy_file_execute_rollback() {
-		let mut op = CopyFile::new(FILE_SOURCE, FILE_DEST);
-		assert_eq!((), op.execute().unwrap());
-		assert_eq!((), op.rollback().unwrap());
+	fn file_setup() -> std::io::Result<()> {
+		File::create(FILE_SOURCE)?;
+		fs::create_dir(DEST_DIR)
 	}
 
-	const DIR_SOURCE: &str = "./test/copy/folder/out";
-	const DIR_DEST: &str = "./test/copy/folder/inner";
+	#[test]
+	#[allow(unused_must_use)]
+	fn copy_file_works() {
+		assert_eq!((), file_setup().unwrap());
+
+		let mut op = CopyFile::new(FILE_SOURCE, FILE_DEST);
+		
+		assert_eq!(false, Path::new(FILE_DEST).exists());
+		assert_eq!((), op.execute().unwrap());
+		assert_eq!(true, Path::new(FILE_SOURCE).exists());
+		assert_eq!(true, Path::new(FILE_DEST).exists());
+
+		assert_eq!((), op.rollback().unwrap());
+		assert_eq!(true, Path::new(FILE_SOURCE).exists());
+		assert_eq!(false, Path::new(FILE_DEST).exists());
+
+		fs::remove_file(FILE_SOURCE);
+		fs::remove_dir_all(DEST_DIR);
+	}
+
+	const DIR_SOURCE: &str = "./copy_dir_source";
+	const DIR_DIR: &str = "./copy_dest_dir";
+	const DIR_DEST: &str = "./copy_dest_dir/copy_dir_source";
 	const DIR_TEMP: &str = "./tmp";
 
+	fn folder_setup() -> std::io::Result<()> {
+		fs::create_dir(DIR_SOURCE)?;
+		fs::create_dir(DIR_DIR)
+	}
+
 	#[test]
-	fn copy_folder_execute_rollback() {
+	#[allow(unused_must_use)]
+	fn copy_dir_works() {
+		assert_eq!((), folder_setup().unwrap());
+
 		let mut op = CopyDirectory::new(DIR_SOURCE, DIR_DEST, DIR_TEMP);
+		
 		assert_eq!((), op.execute().unwrap());
+		assert_eq!(true, Path::new(DIR_SOURCE).exists());
+		assert_eq!(true, Path::new(DIR_DEST).exists());
+
 		assert_eq!((), op.rollback().unwrap());
+		assert_eq!(true, Path::new(DIR_SOURCE).exists());
+		assert_eq!(false, Path::new(DIR_DEST).exists());
+
+		fs::remove_dir_all(DIR_SOURCE);
+		fs::remove_dir(DIR_DIR);
 	}
 }

@@ -21,7 +21,6 @@ impl DeleteFile {
 
 impl RollbackableOperation for DeleteFile {
 	fn execute(&mut self) -> io::Result<()> {
-		self.ensure_temp_dir_exists()?;
 		self.create_backup_file()?;
 
 		fs::remove_file(self.get_path())
@@ -61,7 +60,6 @@ impl Drop for DeleteFile {
 		}
 	}
 }
-
 
 pub struct DeleteDirectory {
 	source: String,
@@ -119,20 +117,55 @@ impl Drop for DeleteDirectory {
 
 #[cfg(test)]
 mod tests {
+	use std::path::Path;
+	use std::fs::File;
 	use super::*;
 
-	const FILE_SOURCE: &str = "./test/delete/file/out.txt";
+	const FILE_SOURCE: &str = "./delete_file_source";
 	const TEMP_DIR: &str = "./tmp/";
 
-	#[test]
-	fn delete_file_execute_rollback() {
-		let mut op = DeleteFile::new(FILE_SOURCE, TEMP_DIR);
-		assert_eq!((), op.execute().unwrap());
-		assert_eq!((), op.rollback().unwrap());
+	fn file_setup() -> std::io::Result<()> {
+		match File::create(FILE_SOURCE) {
+			Ok(_f) => Ok(()),
+			Err(e) => Err(e),
+		}
 	}
 
 	#[test]
-	fn delete_dir_execute_rollback() {
-		let _op = DeleteDirectory::new("!", "2");
+	#[allow(unused_must_use)]
+	fn delete_file_works() {
+		assert_eq!((), file_setup().unwrap());
+
+		let mut op = DeleteFile::new(FILE_SOURCE, TEMP_DIR);
+		
+		assert_eq!(true, Path::new(FILE_SOURCE).exists());
+		assert_eq!((), op.execute().unwrap());
+		assert_eq!(false, Path::new(FILE_SOURCE).exists());
+		assert_eq!((), op.rollback().unwrap());
+		assert_eq!(true, Path::new(FILE_SOURCE).exists());
+
+		fs::remove_file(FILE_SOURCE);
+	}
+
+	const DIR_SOURCE: &str = "./delete_dir_source";
+
+	fn dir_setup() -> std::io::Result<()> {
+		fs::create_dir(DIR_SOURCE)
+	}
+
+	#[test]
+	#[allow(unused_must_use)]
+	fn delete_dir_works() {
+		assert_eq!((), dir_setup().unwrap());
+
+		let mut op = DeleteDirectory::new(DIR_SOURCE, TEMP_DIR);
+
+		assert_eq!(true, Path::new(DIR_SOURCE).exists());
+		assert_eq!((), op.execute().unwrap());
+		assert_eq!(false, Path::new(DIR_SOURCE).exists());
+		assert_eq!((), op.rollback().unwrap());
+		assert_eq!(true, Path::new(DIR_SOURCE).exists());
+
+		fs::remove_dir_all(DIR_SOURCE);
 	}
 }

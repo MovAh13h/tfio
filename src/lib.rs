@@ -11,32 +11,12 @@ use std::path::{PathBuf, Path};
 
 use uuid::Uuid;
 
-pub use write::WriteFile;
 pub use append::AppendFile;
+pub use write::{WriteFile, WriteAndCreateFile};
 pub use copy::{CopyFile, CopyDirectory};
 pub use r#move::{MoveFile, MoveDirectory};
 pub use delete::{DeleteFile, DeleteDirectory};
 pub use create::{CreateFile, CreateDirectory};
-
-
-// Create: CreateFile, CreateDirectory
-// Update: WriteFile, AppendFile
-// Delete: DeleteFile, DeleteDirectory
-// Copy: CopyFile, CopyDirectory
-// Move: MoveFile, MoveDirectory
-
-// CreateFile: RollbackableOperation *
-// CopyFile: RollbackableOperation *
-// MoveFile: RollbackableOperation *
-// DeleteFile: SingleFileOperation + RollbackableOperation *
-// WriteFile: SingleFileOperation + RollbackableOperation *
-// AppendFile: SingleFileOperation + RollbackableOperation *
-
-// CreateDirectory: RollbackableOperation *
-// MoveDirectory: RollbackableOperation *
-// CopyDirectory: DirectoryOperation + RollbackableOperation *
-// DeleteDirectory: DirectoryOperation + RollbackableOperation *
-
 
 pub trait RollbackableOperation {
 	fn execute(&mut self) -> io::Result<()>;
@@ -60,11 +40,9 @@ pub trait DirectoryOperation : RollbackableOperation + Drop {
 		fs::remove_dir(self.get_backup_path())
 	}
 
-	fn ensure_temp_dir_exists(&self) -> io::Result<()> {
-		fs::create_dir_all(&self.get_temp_dir())
-	}
-
 	fn create_backup_folder(&mut self) -> io::Result<()> {
+		fs::create_dir_all(&self.get_temp_dir())?;
+
 		let uuid = Uuid::new_v4();
 		let mut buffer = [b' '; 36];
 		
@@ -98,13 +76,11 @@ pub trait SingleFileOperation: RollbackableOperation + Drop {
 		fs::remove_file(self.get_backup_path())
 	}
 
-	fn ensure_temp_dir_exists(&self) -> io::Result<()> {
-		fs::create_dir_all(&self.get_temp_dir())
-	}
-
 	// Create a temp file that is just a clone of the source file
 	// If backup file is successfully created, method should call `self.set_backup_path`
 	fn create_backup_file(&mut self) -> io::Result<()> {
+		fs::create_dir_all(&self.get_temp_dir())?;
+
 		let uuid = Uuid::new_v4();
 		let mut buffer = [b' '; 36];
 		
@@ -156,9 +132,7 @@ fn copy_dir<U: AsRef<Path>, V: AsRef<Path>>(from: U, to: V) -> io::Result<()> {
 						let dest_path = dest.join(filename);
 						fs::copy(&path, &dest_path)?;
 					}
-					None => {
-						return Err(Error::new(ErrorKind::Other, "Could not extract filename from path"));
-					}
+					None => return Err(Error::new(ErrorKind::Other, "Could not extract filename from path")),
 				}
 			}
 		}
@@ -167,6 +141,87 @@ fn copy_dir<U: AsRef<Path>, V: AsRef<Path>>(from: U, to: V) -> io::Result<()> {
 	Ok(())
 }
 
-// struct FTransaction {
-// 	ops: Vec<Box<dyn RollbackableOperation>>,
-// }
+
+pub struct Transaction {
+	ops: Vec<Box<dyn RollbackableOperation>>,
+}
+
+impl Transaction {
+	pub fn new() -> Self {
+		Self {
+			ops: vec![],
+		}
+	}
+
+	pub fn create_file<S: Into<String>>(mut self, path: S) -> Self {
+		self.ops.push(Box::new(CreateFile::new(path)));
+		self
+	}
+
+	pub fn create_dir<S: Into<String>>(mut self, path: S) -> Self {
+		self.ops.push(Box::new(CreateDirectory::new(path)));
+		self
+	}
+
+	pub fn append_file<S: Into<String>>(mut self, source: S, temp_dir: S, data: Vec<u8>) -> Self {
+		self.ops.push(Box::new(AppendFile::new(source, temp_dir, data)));
+		self
+	}
+
+	pub fn copy_file<S: Into<String>>(mut self, source: S, dest: S) -> Self {
+		self.ops.push(Box::new(CopyFile::new(source, dest)));
+		self
+	}
+
+	pub fn copy_dir<S: Into<String>>(mut self, source: S, dest: S, temp_dir: S) -> Self {
+		self.ops.push(Box::new(CopyDirectory::new(source, dest, temp_dir)));
+		self
+	}
+
+	pub fn delete_file<S: Into<String>>(mut self, source: S, temp_dir: S) -> Self {
+		self.ops.push(Box::new(DeleteFile::new(source, temp_dir)));
+		self
+	}
+
+	pub fn delete_dir<S: Into<String>>(mut self, source: S, temp_dir: S) -> Self {
+		self.ops.push(Box::new(DeleteDirectory::new(source, temp_dir)));
+		self
+	}
+
+	pub fn move_file<S: Into<String>>(mut self, source: S, dest: S) -> Self {
+		self.ops.push(Box::new(MoveFile::new(source, dest)));
+		self
+	}
+
+	pub fn move_dir<S: Into<String>>(mut self, source: S, dest: S) -> Self {
+		self.ops.push(Box::new(MoveDirectory::new(source, dest)));
+		self
+	}
+
+	pub fn write_file<S: Into<String>>(mut self, source: S, temp_dir: S, data: Vec<u8>) -> Self {
+		self.ops.push(Box::new(WriteFile::new(source, temp_dir, data)));
+		self
+	}
+}
+
+impl RollbackableOperation for Transaction {
+	fn execute(&mut self) -> io::Result<()> {
+		for op in self.ops.iter_mut() {
+			if let Err(e) = op.execute() {
+				return Err(e);
+			}
+		}
+
+		Ok(())
+	}
+
+	fn rollback(&self) -> io::Result<()> {
+		for op in self.ops.iter() {
+			if let Err(e) = op.rollback() {
+				return Err(e);
+			}
+		}
+
+		Ok(())
+	}
+}
