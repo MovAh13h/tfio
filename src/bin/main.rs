@@ -1,12 +1,7 @@
 #![allow(dead_code, unused)]
-use std::path::Path;
-use std::fs;
-use uuid::Uuid;
+use std::io::{self, Write, Error, ErrorKind};
 
-const FILE_SOURCE: &str = "./test/copy/file/out.txt";
-const FILE_DEST: &str = "./test/copy/file/inner/out.txt";
-const TEMP_DIR: &str = "./tmp/";
 
-fn main() {
+fn main() -> std::io::Result<()> {
 	todo!()
 }
