@@ -12,7 +12,7 @@ use std::path::{PathBuf, Path};
 use uuid::Uuid;
 
 pub use append::AppendFile;
-pub use write::{WriteFile, WriteAndCreateFile};
+pub use write::WriteFile;
 pub use copy::{CopyFile, CopyDirectory};
 pub use r#move::{MoveFile, MoveDirectory};
 pub use delete::{DeleteFile, DeleteDirectory};
