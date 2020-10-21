@@ -32,12 +32,14 @@
 //!
 //! You can also import single operations to use:
 //! ```
-//!	use std::io;
+//! use std::io;
 //! use std::fs;
 //! use tfio::{CopyFile, RollbackableOperation};
 //! 
 //! fn main() -> io::Result<()> {
-//!		fs::create_dir_all("./bar/baz")?;
+//! 	fs::File::create("./foo.txt")?;
+//! 	fs::create_dir_all("./bar/baz")?;
+//! 
 //! 	let mut copy_operation = CopyFile::new("./foo.txt", "./bar/baz/foo.txt");
 //! 	
 //! 	// Execute the operation
