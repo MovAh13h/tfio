@@ -48,7 +48,7 @@ impl RollbackableOperation for CreateDirectory {
 
 	fn rollback(&self) -> io::Result<()> {
 		// TODO: So bad
-		fs::remove_dir_all(&self.path.split("/").collect::<Vec<&str>>()[1])
+		fs::remove_dir_all(&self.path.strip_prefix("./").expect("Could not strip prefix").split("/").collect::<Vec<&str>>()[0])
 	}
 }
 
