@@ -12,11 +12,6 @@
 5) 100% Tests passing
 
 ## Usage
-Add the following to your `Cargo.toml`:
-```toml
-tfio = "0.1.0"
-```
-
 Import the library in your Rust project:
 ```rust
 use tfio::*;
