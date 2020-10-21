@@ -4,7 +4,7 @@
 //!
 //! Create a transaction and execute it. If any `Error` is encountered, rollback the entire transaction:
 //! Note: The paths should only use forward slashes (`/`) and can either begin with disks or relative to the present working directory ie. begin with `./`
-//! ```ignore
+//! ```
 //! use std::io;
 //! use tfio::*;
 //! 
@@ -31,11 +31,13 @@
 //! ```
 //!
 //! You can also import single operations to use:
-//! ```ignore
+//! ```
 //!	use std::io;
+//! use std::fs;
 //! use tfio::{CopyFile, RollbackableOperation};
 //! 
 //! fn main() -> io::Result<()> {
+//!		fs::create_dir_all("./bar/baz")?;
 //! 	let mut copy_operation = CopyFile::new("./foo.txt", "./bar/baz/foo.txt");
 //! 	
 //! 	// Execute the operation
