@@ -144,12 +144,14 @@ fn copy_dir<U: AsRef<Path>, V: AsRef<Path>>(from: U, to: V) -> io::Result<()> {
 
 pub struct Transaction {
 	ops: Vec<Box<dyn RollbackableOperation>>,
+	execution_count: usize,
 }
 
 impl Transaction {
 	pub fn new() -> Self {
 		Self {
 			ops: vec![],
+			execution_count: 0,
 		}
 	}
 
@@ -206,8 +208,9 @@ impl Transaction {
 
 impl RollbackableOperation for Transaction {
 	fn execute(&mut self) -> io::Result<()> {
-		for op in self.ops.iter_mut() {
-			if let Err(e) = op.execute() {
+		for i in 0..self.ops.len() {
+			self.execution_count += 1;
+			if let Err(e) = self.ops[i].execute() {
 				return Err(e);
 			}
 		}
@@ -216,12 +219,44 @@ impl RollbackableOperation for Transaction {
 	}
 
 	fn rollback(&self) -> io::Result<()> {
-		for op in self.ops.iter() {
-			if let Err(e) = op.rollback() {
+		for i in (0..self.execution_count).rev() {
+			if let Err(e) = self.ops[i].rollback() {
 				return Err(e);
 			}
 		}
 
 		Ok(())
+	}
+}
+
+
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	#[allow(unused)]
+	fn transaction_works() {
+		let temp_dir = "./tmp";
+		let mut tr = Transaction::new()
+						.create_file("./created_file_transaction.txt")
+						.create_file("./for_delete.txt")
+						.create_dir("./inner/create_dir_transaction")
+						.create_dir("./for_delete_dir")
+						.create_dir("./magic_dir")
+						.write_file("./created_file_transaction.txt", temp_dir, b"Hello World".to_vec())
+						.append_file("./created_file_transaction.txt", temp_dir, b"Hello World".to_vec())
+						.copy_file("./created_file_transaction.txt", "./inner/created_file_transaction.txt")
+						.copy_dir("./magic_dir", "./inner/magic_dir", temp_dir)
+						.delete_file("./for_delete.txt", temp_dir)
+						.delete_dir("./for_delete_dir", temp_dir)
+						.move_file("./inner/created_file_transaction.txt", "./inner/magic_dir/created_file_transaction.txt")
+						.create_dir("./for_moving")
+						.move_dir("./for_moving", "./inner/magic_dir/for_moving");
+
+
+		assert_eq!((), tr.execute().expect("Cannot execute"));
+		assert_eq!((), tr.rollback().expect("Cannot Rollback"));
 	}
 }

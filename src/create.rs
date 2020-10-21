@@ -1,4 +1,5 @@
 use std::io;
+
 use std::fs::{self, File};
 
 use crate::{RollbackableOperation};
@@ -46,7 +47,8 @@ impl RollbackableOperation for CreateDirectory {
 	}
 
 	fn rollback(&self) -> io::Result<()> {
-		fs::remove_dir_all(&self.path)
+		// TODO: So bad
+		fs::remove_dir_all(&self.path.split("/").collect::<Vec<&str>>()[1])
 	}
 }
 
