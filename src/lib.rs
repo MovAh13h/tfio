@@ -4,7 +4,7 @@
 //!
 //! Create a transaction and execute it. If any `Error` is encountered, rollback the entire transaction:
 //! Note: The paths should only use forward slashes (`/`) and can either begin with disks or relative to the present working directory ie. begin with `./`
-//! ```
+//! ```ignore
 //! use std::io;
 //! use tfio::*;
 //! 
@@ -31,7 +31,7 @@
 //! ```
 //!
 //! You can also import single operations to use:
-//! ```
+//! ```ignore
 //!	use std::io;
 //! use tfio::{CopyFile, RollbackableOperation};
 //! 
