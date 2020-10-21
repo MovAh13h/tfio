@@ -251,9 +251,9 @@ mod tests {
 						.copy_dir("./magic_dir", "./inner/magic_dir", temp_dir)
 						.delete_file("./for_delete.txt", temp_dir)
 						.delete_dir("./for_delete_dir", temp_dir)
-						.move_file("./inner/created_file_transaction.txt", ".\\inner/magic_dir/created_file_transaction.txt")
+						.move_file("./inner/created_file_transaction.txt", "./inner/magic_dir/created_file_transaction.txt")
 						.create_dir("./for_moving")
-						.move_dir("./for_moving", ".\\inner\\magic_dir\\for_moving");
+						.move_dir("./for_moving", "./inner/magic_dir/for_moving");
 
 
 		assert_eq!((), tr.execute().expect("Cannot execute"));
