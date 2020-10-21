@@ -31,11 +31,11 @@ use tfio::*;
 fn main() -> io::Result<()> {
 	let temp_dir = "./PATH_TO_TEMP_DIR";
 	let mut tr = Transaction::new()
-					.create_file("./foo.txt")
-					.create_dir("./bar")
-					.write_file("./foo.txt", temp_dir, b"Hello World".to_vec())
-					.move_file("./foo.txt", "./bar/foo.txt")
-					.append_file("./bar/foo.txt", temp_dir, b"dlroW olleH".to_vec());
+				.create_file("./foo.txt")
+				.create_dir("./bar")
+				.write_file("./foo.txt", temp_dir, b"Hello World".to_vec())
+				.move_file("./foo.txt", "./bar/foo.txt")
+				.append_file("./bar/foo.txt", temp_dir, b"dlroW olleH".to_vec());
 	
 	// Execute the transaction
 	if let Err(e) = tr.execute() {
