@@ -1,5 +1,7 @@
 # TFIO - Transactional File I/O
 
+![tfio](https://github.com/GandalfTheGrayOfHell/tfio/workflows/tfio/badge.svg)
+
 **TFIO** is a library that provides a Transaction-like interface that are traditionally used in databases on FileIO operations. It gives the flexibility to execute and rollback singlular operations as well as transactions on the fly. The library also provides a builder-pattern interface to chain operations and execute them in one go.
 
 ## Features
