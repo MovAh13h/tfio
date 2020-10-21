@@ -3,6 +3,7 @@ use std::io::{self, Write, Read};
 
 use crate::{RollbackableOperation, SingleFileOperation};
 
+/// Appends data to a file
 pub struct AppendFile {
 	source: String,
 	temp_dir: String,
@@ -11,6 +12,7 @@ pub struct AppendFile {
 }
 
 impl AppendFile {
+	/// Constructs a new AppendFile operation
 	pub fn new<S: Into<String>>(source: S, temp_dir: S, data: Vec<u8>) -> Self {
 		Self {
 			source: source.into(),

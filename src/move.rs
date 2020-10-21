@@ -3,15 +3,24 @@ use std::fs;
 
 use crate::{RollbackableOperation};
 
+/// Moves a file from source to destination. A type alias for [MoveOperation](MoveOperation) for consistency in the API
 pub type MoveFile = MoveOperation;
+
+/// Moves a directory from source to destination. A type alias for [MoveOperation](MoveOperation) for consistency in the API
 pub type MoveDirectory = MoveOperation;
 
+/// Move operation
+///
+/// This is a type-independent operation ie. it works with both files and directories since [std::fs::rename](std::fs::rename) is also independent
 pub struct MoveOperation {
 	source: String,
 	dest: String,
 }
 
 impl MoveOperation {
+	/// Constructs a new MoveOperation operation
+	///
+	/// This operation is directly called by [MoveFile](MoveFile) and [MoveDirectory](MoveDirectory) and hence only available as a single operation
 	pub fn new<S: Into<String>>(source: S, dest: S) -> Self {
 		Self {
 			source: source.into(),

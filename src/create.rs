@@ -1,14 +1,15 @@
 use std::io;
-
 use std::fs::{self, File};
 
 use crate::{RollbackableOperation};
 
+/// Creates a new file
 pub struct CreateFile {
 	path: String,
 }
 
 impl CreateFile {
+	/// Constructs a new CreateFile operation
 	pub fn new<S: Into<String>>(path: S) -> Self {
 		Self {
 			path: path.into()
@@ -29,11 +30,13 @@ impl RollbackableOperation for CreateFile {
 	}
 }
 
+/// Creates a new directory
 pub struct CreateDirectory {
 	path: String,
 }
 
 impl CreateDirectory {
+	/// Constructs a new CreateDirectory operation
 	pub fn new<S: Into<String>>(path: S) -> Self {
 		Self {
 			path: path.into()

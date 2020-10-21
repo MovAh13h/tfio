@@ -3,6 +3,7 @@ use std::fs;
 
 use crate::{RollbackableOperation, SingleFileOperation, DirectoryOperation};
 
+/// Deletes a file
 pub struct DeleteFile {
 	source: String,
 	temp_dir: String,
@@ -10,6 +11,7 @@ pub struct DeleteFile {
 }
 
 impl DeleteFile {
+	/// Constructs a new DeleteFile operation
 	pub fn new<S: Into<String>>(source: S, temp_dir: S) -> Self {
 		Self {
 			source: source.into(),
@@ -61,6 +63,7 @@ impl Drop for DeleteFile {
 	}
 }
 
+/// Deletes a directory
 pub struct DeleteDirectory {
 	source: String,
 	backup_path: String,
@@ -68,6 +71,7 @@ pub struct DeleteDirectory {
 }
 
 impl DeleteDirectory {
+	/// Constructs a new DeleteDirectory operation
 	pub fn new<S: Into<String>>(source: S, temp_dir: S) -> Self {
 		Self {
 			source: source.into(),

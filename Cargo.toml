@@ -1,6 +1,6 @@
 [package]
 name = "tfio"
-version = "0.1.0"
+version = "0.1.1"
 license = "MIT"
 authors = ["Tanishq Jain <tanishqjain1002@gmail.com>"]
 edition = "2018"

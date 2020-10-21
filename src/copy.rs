@@ -3,12 +3,14 @@ use std::fs;
 
 use crate::{RollbackableOperation, DirectoryOperation, copy_dir};
 
+/// Copies a file to destination
 pub struct CopyFile {
 	source: String,
 	dest: String,
 }
 
 impl CopyFile {
+	/// Constructs a new CopyFile operation
 	pub fn new<S: Into<String>>(source: S, dest: S) -> Self {
 		Self {
 			source: source.into(),
@@ -30,6 +32,7 @@ impl RollbackableOperation for CopyFile {
 	}
 }
 
+/// Copies a directory to destination
 pub struct CopyDirectory {
 	source: String,
 	dest: String,
@@ -38,6 +41,7 @@ pub struct CopyDirectory {
 }
 
 impl CopyDirectory {
+	/// Constructs a new CopyDirectory operation
 	pub fn new<S: Into<String>>(source: S, dest: S, temp_dir: S) -> Self {
 		Self {
 			source: source.into(),

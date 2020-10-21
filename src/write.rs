@@ -1,8 +1,9 @@
+use std::fs::OpenOptions;
 use std::io::{self, Write, Read};
-use std::fs::{OpenOptions};
 
 use crate::{RollbackableOperation, SingleFileOperation};
 
+/// Writes data to a file
 pub struct WriteFile {
 	source: String,
 	temp_dir: String,
@@ -11,6 +12,7 @@ pub struct WriteFile {
 }
 
 impl WriteFile {
+	/// Constructs a new WriteFile operation
 	pub fn new<S: Into<String>>(source: S, temp_dir: S, data: Vec<u8>) -> Self {
 		Self {
 			source: source.into(),
