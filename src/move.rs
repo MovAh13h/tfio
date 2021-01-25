@@ -1,7 +1,7 @@
-use std::io;
+use std::{io, path::{Path, PathBuf}};
 use std::fs;
 
-use crate::{RollbackableOperation};
+use crate::RollbackableOperation;
 
 /// Moves a file from source to destination. A type alias for [MoveOperation](MoveOperation) for consistency in the API
 pub type MoveFile = MoveOperation;
@@ -13,18 +13,18 @@ pub type MoveDirectory = MoveOperation;
 ///
 /// This is a type-independent operation ie. it works with both files and directories since [std::fs::rename](std::fs::rename) is also independent
 pub struct MoveOperation {
-	source: String,
-	dest: String,
+	source: PathBuf,
+	dest: PathBuf,
 }
 
 impl MoveOperation {
 	/// Constructs a new MoveOperation operation
 	///
 	/// This operation is directly called by [MoveFile](MoveFile) and [MoveDirectory](MoveDirectory) and hence only available as a single operation
-	pub fn new<S: Into<String>>(source: S, dest: S) -> Self {
+	pub fn new<S: AsRef<Path>, T: AsRef<Path>>(source: S, dest: T) -> Self {
 		Self {
-			source: source.into(),
-			dest: dest.into(),
+			source: source.as_ref().into(),
+			dest: dest.as_ref().into(),
 		}
 	}
 }

@@ -1,22 +1,22 @@
-use std::io;
+use std::{io, path::{Path, PathBuf}};
 use std::fs;
 
 use crate::{RollbackableOperation, SingleFileOperation, DirectoryOperation};
 
 /// Deletes a file
 pub struct DeleteFile {
-	source: String,
-	temp_dir: String,
-	backup_path: String,
+	source: PathBuf,
+	temp_dir: PathBuf,
+	backup_path: PathBuf,
 }
 
 impl DeleteFile {
 	/// Constructs a new DeleteFile operation
-	pub fn new<S: Into<String>>(source: S, temp_dir: S) -> Self {
+	pub fn new<S: AsRef<Path>, T: AsRef<Path>>(source: S, temp_dir: T) -> Self {
 		Self {
-			source: source.into(),
-			temp_dir: temp_dir.into(),
-			backup_path: String::new(),
+			source: source.as_ref().into(),
+			temp_dir: temp_dir.as_ref().into(),
+			backup_path: PathBuf::new(),
 		}
 	}
 }
@@ -37,19 +37,19 @@ impl RollbackableOperation for DeleteFile {
 }
 
 impl SingleFileOperation for DeleteFile {
-	fn get_path(&self) -> &String {
+	fn get_path(&self) -> &Path {
 		&self.source
 	}
 
-	fn get_backup_path(&self) -> &String {
+	fn get_backup_path(&self) -> &Path {
 		&self.backup_path
 	}
 
-	fn set_backup_path<S: Into<String>>(&mut self, uuid: S) {
-		self.backup_path = uuid.into();
+	fn set_backup_path<S: AsRef<Path>>(&mut self, uuid: S) {
+		self.backup_path = uuid.as_ref().into();
 	}
 
-	fn get_temp_dir(&self) -> &String {
+	fn get_temp_dir(&self) -> &Path {
 		&self.temp_dir
 	}
 }
@@ -65,18 +65,18 @@ impl Drop for DeleteFile {
 
 /// Deletes a directory
 pub struct DeleteDirectory {
-	source: String,
-	backup_path: String,
-	temp_dir: String,
+	source: PathBuf,
+	backup_path: PathBuf,
+	temp_dir: PathBuf,
 }
 
 impl DeleteDirectory {
 	/// Constructs a new DeleteDirectory operation
-	pub fn new<S: Into<String>>(source: S, temp_dir: S) -> Self {
+	pub fn new<S: AsRef<Path>, T: AsRef<Path>>(source: S, temp_dir: T) -> Self {
 		Self {
-			source: source.into(),
-			temp_dir: temp_dir.into(),
-			backup_path: String::new(),
+			source: source.as_ref().into(),
+			temp_dir: temp_dir.as_ref().into(),
+			backup_path: PathBuf::new(),
 		}
 	}
 }
@@ -93,19 +93,19 @@ impl RollbackableOperation for DeleteDirectory {
 }
 
 impl DirectoryOperation for DeleteDirectory {
-	fn get_path(&self) -> &String {
+	fn get_path(&self) -> &Path {
 		&self.source
 	}
 
-	fn get_backup_path(&self) -> &String {
+	fn get_backup_path(&self) -> &Path {
 		&self.backup_path
 	}
 
-	fn set_backup_path<S: Into<String>>(&mut self, uuid: S) {
-		self.backup_path = uuid.into();
+	fn set_backup_path<S: AsRef<Path>>(&mut self, uuid: S) {
+		self.backup_path = uuid.as_ref().into();
 	}
 	
-	fn get_temp_dir(&self) -> &String {
+	fn get_temp_dir(&self) -> &Path {
 		&self.temp_dir
 	}
 }

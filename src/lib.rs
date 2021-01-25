@@ -89,18 +89,18 @@ pub trait RollbackableOperation {
 /// Trait that represents a Directory operation
 pub trait DirectoryOperation : RollbackableOperation + Drop {
 	/// Returns path to source directory
-	fn get_path(&self) -> &String;
+	fn get_path(&self) -> &Path;
 
 	/// Returns path to backup directory
 	///
 	/// Defaults to ""
-	fn get_backup_path(&self) -> &String;
+	fn get_backup_path(&self) -> &Path;
 	
 	/// Sets the backup path
-	fn set_backup_path<S: Into<String>>(&mut self, uuid: S);
+	fn set_backup_path<S: AsRef<Path>>(&mut self, uuid: S);
 
 	/// Returns path to temp dir
-	fn get_temp_dir(&self) -> &String;
+	fn get_temp_dir(&self) -> &Path;
 
 	/// Dispose off resources used by the operation
 	///
@@ -134,18 +134,18 @@ pub trait DirectoryOperation : RollbackableOperation + Drop {
 /// Trait that represents a single file operation
 pub trait SingleFileOperation: RollbackableOperation + Drop {
 	/// Returns path to source file
-	fn get_path(&self) -> &String;
+	fn get_path(&self) -> &Path;
 
 	/// Returns path to backup file
 	///
 	/// Defaults to ""
-	fn get_backup_path(&self) -> &String;
+	fn get_backup_path(&self) -> &Path;
 
 	/// Sets the backup path
-	fn set_backup_path<S: Into<String>>(&mut self, uuid: S);
+	fn set_backup_path<S: AsRef<Path>>(&mut self, uuid: S);
 
 	/// Returns path to temp dir
-	fn get_temp_dir(&self) -> &String;
+	fn get_temp_dir(&self) -> &Path;
 
 	/// Dispose off resources used by the operation
 	///
@@ -236,61 +236,61 @@ impl Transaction {
 	}
 
 	/// Adds a [CreateFile](struct.CreateFile.html) operation to the transaction
-	pub fn create_file<S: Into<String>>(mut self, path: S) -> Transaction {
+	pub fn create_file<S: AsRef<Path>>(mut self, path: S) -> Transaction {
 		self.ops.push(Box::new(CreateFile::new(path)));
 		self
 	}
 
 	/// Adds a [CreateDirectory](struct.CreateDirectory.html) operation to the transaction
-	pub fn create_dir<S: Into<String>>(mut self, path: S) -> Transaction {
+	pub fn create_dir<S: AsRef<Path>>(mut self, path: S) -> Transaction {
 		self.ops.push(Box::new(CreateDirectory::new(path)));
 		self
 	}
 
 	/// Adds a [AppendFile](struct.AppendFile.html) operation to the transaction
-	pub fn append_file<S: Into<String>>(mut self, source: S, temp_dir: S, data: Vec<u8>) -> Transaction {
+	pub fn append_file<S: AsRef<Path>>(mut self, source: S, temp_dir: S, data: Vec<u8>) -> Transaction {
 		self.ops.push(Box::new(AppendFile::new(source, temp_dir, data)));
 		self
 	}
 
 	/// Adds a [CopyFile](struct.CopyFile.html) operation to the transaction
-	pub fn copy_file<S: Into<String>>(mut self, source: S, dest: S) -> Transaction {
+	pub fn copy_file<S: AsRef<Path>>(mut self, source: S, dest: S) -> Transaction {
 		self.ops.push(Box::new(CopyFile::new(source, dest)));
 		self
 	}
 
 	/// Adds a [CopyDirectory](struct.CopyDirectory.html) operation to the transaction
-	pub fn copy_dir<S: Into<String>>(mut self, source: S, dest: S, temp_dir: S) -> Transaction {
+	pub fn copy_dir<S: AsRef<Path>>(mut self, source: S, dest: S, temp_dir: S) -> Transaction {
 		self.ops.push(Box::new(CopyDirectory::new(source, dest, temp_dir)));
 		self
 	}
 
 	/// Adds a [DeleteFile](struct.DeleteFile.html) operation to the transaction
-	pub fn delete_file<S: Into<String>>(mut self, source: S, temp_dir: S) -> Transaction {
+	pub fn delete_file<S: AsRef<Path>>(mut self, source: S, temp_dir: S) -> Transaction {
 		self.ops.push(Box::new(DeleteFile::new(source, temp_dir)));
 		self
 	}
 
 	/// Adds a [DeleteDirectory](struct.DeleteDirectory.html) operation to the transaction
-	pub fn delete_dir<S: Into<String>>(mut self, source: S, temp_dir: S) -> Transaction {
+	pub fn delete_dir<S: AsRef<Path>>(mut self, source: S, temp_dir: S) -> Transaction {
 		self.ops.push(Box::new(DeleteDirectory::new(source, temp_dir)));
 		self
 	}
 
 	/// Adds a [MoveFile](type.MoveFile.html) operation to the transaction
-	pub fn move_file<S: Into<String>>(mut self, source: S, dest: S) -> Transaction {
+	pub fn move_file<S: AsRef<Path>>(mut self, source: S, dest: S) -> Transaction {
 		self.ops.push(Box::new(MoveFile::new(source, dest)));
 		self
 	}
 
 	/// Adds a [MoveDirectory](type.MoveDirectory.html) operation to the transaction
-	pub fn move_dir<S: Into<String>>(mut self, source: S, dest: S) -> Transaction {
+	pub fn move_dir<S: AsRef<Path>>(mut self, source: S, dest: S) -> Transaction {
 		self.ops.push(Box::new(MoveDirectory::new(source, dest)));
 		self
 	}
 
 	/// Adds a [WriteFile](struct.WriteFile.html) operation to the transaction
-	pub fn write_file<S: Into<String>>(mut self, source: S, temp_dir: S, data: Vec<u8>) -> Transaction {
+	pub fn write_file<S: AsRef<Path>>(mut self, source: S, temp_dir: S, data: Vec<u8>) -> Transaction {
 		self.ops.push(Box::new(WriteFile::new(source, temp_dir, data)));
 		self
 	}

@@ -1,23 +1,23 @@
-use std::fs::OpenOptions;
+use std::{fs::OpenOptions, path::{Path, PathBuf}};
 use std::io::{self, Write, Read};
 
 use crate::{RollbackableOperation, SingleFileOperation};
 
 /// Writes data to a file
 pub struct WriteFile {
-	source: String,
-	temp_dir: String,
-	backup_path: String,
+	source: PathBuf,
+	temp_dir: PathBuf,
+	backup_path: PathBuf,
 	data: Vec<u8>,
 }
 
 impl WriteFile {
 	/// Constructs a new WriteFile operation
-	pub fn new<S: Into<String>>(source: S, temp_dir: S, data: Vec<u8>) -> Self {
+	pub fn new<S: AsRef<Path>, T: AsRef<Path>>(source: S, temp_dir: T, data: Vec<u8>) -> Self {
 		Self {
-			source: source.into(),
-			temp_dir: temp_dir.into(),
-			backup_path: String::new(),
+			source: source.as_ref().into(),
+			temp_dir: temp_dir.as_ref().into(),
+			backup_path: PathBuf::new(),
 			data: data,
 		}
 	}
@@ -41,19 +41,19 @@ impl RollbackableOperation for WriteFile {
 }
 
 impl SingleFileOperation for WriteFile {
-	fn get_path(&self) -> &String {
+	fn get_path(&self) -> &Path {
 		&self.source
 	}
 
-	fn get_backup_path(&self) -> &String {
+	fn get_backup_path(&self) -> &Path {
 		&self.backup_path
 	}
 
-	fn set_backup_path<S: Into<String>>(&mut self, uuid: S) {
-		self.backup_path = uuid.into();
+	fn set_backup_path<S: AsRef<Path>>(&mut self, uuid: S) {
+		self.backup_path = uuid.as_ref().into();
 	}
 
-	fn get_temp_dir(&self) -> &String {
+	fn get_temp_dir(&self) -> &Path {
 		&self.temp_dir
 	}
 }
