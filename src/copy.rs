@@ -1,20 +1,20 @@
-use std::io;
+use std::{io, path::{Path, PathBuf}};
 use std::fs;
 
 use crate::{RollbackableOperation, DirectoryOperation, copy_dir};
 
 /// Copies a file to destination
 pub struct CopyFile {
-	source: String,
-	dest: String,
+	source: PathBuf,
+	dest: PathBuf,
 }
 
 impl CopyFile {
 	/// Constructs a new CopyFile operation
-	pub fn new<S: Into<String>>(source: S, dest: S) -> Self {
+	pub fn new<S: AsRef<Path>, T: AsRef<Path>>(source: S, dest: T) -> Self {
 		Self {
-			source: source.into(),
-			dest: dest.into(),
+			source: source.as_ref().into(),
+			dest: dest.as_ref().into(),
 		}
 	}
 }
@@ -34,20 +34,20 @@ impl RollbackableOperation for CopyFile {
 
 /// Copies a directory to destination
 pub struct CopyDirectory {
-	source: String,
-	dest: String,
-	backup_path: String,
-	temp_dir: String,
+	source: PathBuf,
+	dest: PathBuf,
+	backup_path: PathBuf,
+	temp_dir: PathBuf,
 }
 
 impl CopyDirectory {
 	/// Constructs a new CopyDirectory operation
-	pub fn new<S: Into<String>>(source: S, dest: S, temp_dir: S) -> Self {
+	pub fn new<S: AsRef<Path>, T: AsRef<Path>, U: AsRef<Path>>(source: S, dest: T, temp_dir: U) -> Self {
 		Self {
-			source: source.into(),
-			dest: dest.into(),
-			temp_dir: temp_dir.into(),
-			backup_path: String::new(),
+			source: source.as_ref().into(),
+			dest: dest.as_ref().into(),
+			temp_dir: temp_dir.as_ref().into(),
+			backup_path: PathBuf::new(),
 		}
 	}
 }
@@ -64,19 +64,19 @@ impl RollbackableOperation for CopyDirectory {
 }
 
 impl DirectoryOperation for CopyDirectory {
-	fn get_path(&self) -> &String {
+	fn get_path(&self) -> &Path {
 		&self.source
 	}
 
-	fn get_backup_path(&self) -> &String {
+	fn get_backup_path(&self) -> &Path {
 		&self.backup_path
 	}
 
-	fn set_backup_path<S: Into<String>>(&mut self, uuid: S) {
-		self.backup_path = uuid.into();
+	fn set_backup_path<S: AsRef<Path>>(&mut self, uuid: S) {
+		self.backup_path = uuid.as_ref().into();
 	}
 
-	fn get_temp_dir(&self) -> &String {
+	fn get_temp_dir(&self) -> &Path {
 		&self.temp_dir
 	}
 }

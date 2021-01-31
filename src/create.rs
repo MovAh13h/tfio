@@ -1,18 +1,18 @@
-use std::io;
+use std::{io, path::{Path, PathBuf}};
 use std::fs::{self, File};
 
-use crate::{RollbackableOperation};
+use crate::RollbackableOperation;
 
 /// Creates a new file
 pub struct CreateFile {
-	path: String,
+	path: PathBuf,
 }
 
 impl CreateFile {
 	/// Constructs a new CreateFile operation
-	pub fn new<S: Into<String>>(path: S) -> Self {
+	pub fn new<S: AsRef<Path>>(path: S) -> Self {
 		Self {
-			path: path.into()
+			path: path.as_ref().into()
 		}
 	}
 }
@@ -32,14 +32,14 @@ impl RollbackableOperation for CreateFile {
 
 /// Creates a new directory
 pub struct CreateDirectory {
-	path: String,
+	path: PathBuf,
 }
 
 impl CreateDirectory {
 	/// Constructs a new CreateDirectory operation
-	pub fn new<S: Into<String>>(path: S) -> Self {
+	pub fn new<S: AsRef<Path>>(path: S) -> Self {
 		Self {
-			path: path.into()
+			path: path.as_ref().into()
 		}
 	}
 }
@@ -51,7 +51,7 @@ impl RollbackableOperation for CreateDirectory {
 
 	fn rollback(&self) -> io::Result<()> {
 		// TODO: So bad
-		fs::remove_dir_all(&self.path.strip_prefix("./").expect("Could not strip prefix").split("/").collect::<Vec<&str>>()[0])
+		fs::remove_dir_all(&self.path)
 	}
 }
 
