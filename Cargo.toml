@@ -12,4 +12,5 @@ description = "A library that provides a Transaction-like interface that are tra
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+dyn-clone = "1.0.17"
 uuid = { version = "0.8", features = ["v4"] }

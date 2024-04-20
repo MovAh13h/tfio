@@ -15,6 +15,7 @@ pub type MoveDirectory = MoveOperation;
 /// Move operation
 ///
 /// This is a type-independent operation ie. it works with both files and directories since [std::fs::rename](std::fs::rename) is also independent
+#[derive(Clone)]
 pub struct MoveOperation {
     source: PathBuf,
     dest: PathBuf,
