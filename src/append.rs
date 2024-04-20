@@ -7,6 +7,7 @@ use std::{
 use crate::{RollbackableOperation, SingleFileOperation};
 
 /// Appends data to a file
+#[derive(Clone)]
 pub struct AppendFile {
     source: PathBuf,
     temp_dir: PathBuf,

@@ -7,6 +7,7 @@ use std::{
 use crate::RollbackableOperation;
 
 /// Creates a new file
+#[derive(Clone)]
 pub struct CreateFile {
     path: PathBuf,
 }
@@ -34,6 +35,7 @@ impl RollbackableOperation for CreateFile {
 }
 
 /// Creates a new directory
+#[derive(Clone)]
 pub struct CreateDirectory {
     path: PathBuf,
 }

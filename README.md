@@ -7,7 +7,7 @@
 ## Features
 1) 100% safe code (thanks to [Rust](https://www.rust-lang.org/))
 2) 10 rollback-able File/Directory operations
-3) Only 1 Third-party dependency
+3) Only 2 Third-party dependencies
 4) All `Errors` exposed for handling
 5) 100% Tests passing
 

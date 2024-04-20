@@ -78,13 +78,15 @@ pub use r#move::{MoveDirectory, MoveFile, MoveOperation};
 pub use write::WriteFile;
 
 /// Trait that represents a Rollbackable operation
-pub trait RollbackableOperation {
+pub trait RollbackableOperation: dyn_clone::DynClone {
     /// Executes the operation
     fn execute(&mut self) -> io::Result<()>;
 
     /// Rollbacks the operation
     fn rollback(&self) -> io::Result<()>;
 }
+
+dyn_clone::clone_trait_object!(RollbackableOperation);
 
 /// Trait that represents a Directory operation
 pub trait DirectoryOperation: RollbackableOperation + Drop {
@@ -239,6 +241,7 @@ fn copy_dir<U: AsRef<Path>, V: AsRef<Path>>(from: U, to: V) -> io::Result<()> {
 }
 
 /// A rollbackable Transaction
+#[derive(Clone)]
 pub struct Transaction {
     ops: Vec<Box<dyn RollbackableOperation>>,
     execution_count: usize,
@@ -254,74 +257,64 @@ impl Transaction {
     }
 
     /// Adds a [CreateFile](struct.CreateFile.html) operation to the transaction
-    pub fn create_file<S: AsRef<Path>>(mut self, path: S) -> Transaction {
+    pub fn create_file<S: AsRef<Path>>(mut self, path: S) -> Self {
         self.ops.push(Box::new(CreateFile::new(path)));
         self
     }
 
     /// Adds a [CreateDirectory](struct.CreateDirectory.html) operation to the transaction
-    pub fn create_dir<S: AsRef<Path>>(mut self, path: S) -> Transaction {
+    pub fn create_dir<S: AsRef<Path>>(mut self, path: S) -> Self {
         self.ops.push(Box::new(CreateDirectory::new(path)));
         self
     }
 
     /// Adds a [AppendFile](struct.AppendFile.html) operation to the transaction
-    pub fn append_file<S: AsRef<Path>>(
-        mut self,
-        source: S,
-        temp_dir: S,
-        data: Vec<u8>,
-    ) -> Transaction {
+    pub fn append_file<S: AsRef<Path>>(mut self, source: S, temp_dir: S, data: Vec<u8>) -> Self {
         self.ops
             .push(Box::new(AppendFile::new(source, temp_dir, data)));
         self
     }
 
     /// Adds a [CopyFile](struct.CopyFile.html) operation to the transaction
-    pub fn copy_file<S: AsRef<Path>>(mut self, source: S, dest: S) -> Transaction {
+    pub fn copy_file<S: AsRef<Path>>(mut self, source: S, dest: S) -> Self {
         self.ops.push(Box::new(CopyFile::new(source, dest)));
         self
     }
 
     /// Adds a [CopyDirectory](struct.CopyDirectory.html) operation to the transaction
-    pub fn copy_dir<S: AsRef<Path>>(mut self, source: S, dest: S, temp_dir: S) -> Transaction {
+    pub fn copy_dir<S: AsRef<Path>>(mut self, source: S, dest: S, temp_dir: S) -> Self {
         self.ops
             .push(Box::new(CopyDirectory::new(source, dest, temp_dir)));
         self
     }
 
     /// Adds a [DeleteFile](struct.DeleteFile.html) operation to the transaction
-    pub fn delete_file<S: AsRef<Path>>(mut self, source: S, temp_dir: S) -> Transaction {
+    pub fn delete_file<S: AsRef<Path>>(mut self, source: S, temp_dir: S) -> Self {
         self.ops.push(Box::new(DeleteFile::new(source, temp_dir)));
         self
     }
 
     /// Adds a [DeleteDirectory](struct.DeleteDirectory.html) operation to the transaction
-    pub fn delete_dir<S: AsRef<Path>>(mut self, source: S, temp_dir: S) -> Transaction {
+    pub fn delete_dir<S: AsRef<Path>>(mut self, source: S, temp_dir: S) -> Self {
         self.ops
             .push(Box::new(DeleteDirectory::new(source, temp_dir)));
         self
     }
 
     /// Adds a [MoveFile](type.MoveFile.html) operation to the transaction
-    pub fn move_file<S: AsRef<Path>>(mut self, source: S, dest: S) -> Transaction {
+    pub fn move_file<S: AsRef<Path>>(mut self, source: S, dest: S) -> Self {
         self.ops.push(Box::new(MoveFile::new(source, dest)));
         self
     }
 
     /// Adds a [MoveDirectory](type.MoveDirectory.html) operation to the transaction
-    pub fn move_dir<S: AsRef<Path>>(mut self, source: S, dest: S) -> Transaction {
+    pub fn move_dir<S: AsRef<Path>>(mut self, source: S, dest: S) -> Self {
         self.ops.push(Box::new(MoveDirectory::new(source, dest)));
         self
     }
 
     /// Adds a [WriteFile](struct.WriteFile.html) operation to the transaction
-    pub fn write_file<S: AsRef<Path>>(
-        mut self,
-        source: S,
-        temp_dir: S,
-        data: Vec<u8>,
-    ) -> Transaction {
+    pub fn write_file<S: AsRef<Path>>(mut self, source: S, temp_dir: S, data: Vec<u8>) -> Self {
         self.ops
             .push(Box::new(WriteFile::new(source, temp_dir, data)));
         self
@@ -363,34 +356,38 @@ mod tests {
     #[allow(unused)]
     fn transaction_works() {
         let temp_dir = "./tmp";
+        // Chaining works perfectly...
         let mut tr = Transaction::new()
             .create_file("./created_file_transaction.txt")
             .create_file("./for_delete.txt")
             .create_dir("./inner/create_dir_transaction")
             .create_dir("./for_delete_dir")
-            .create_dir("./magic_dir")
-            .write_file(
-                "./created_file_transaction.txt",
-                temp_dir,
-                b"Hello World".to_vec(),
-            )
-            .append_file(
-                "./created_file_transaction.txt",
-                temp_dir,
-                b"Hello World".to_vec(),
-            )
-            .copy_file(
-                "./created_file_transaction.txt",
-                "./inner/created_file_transaction.txt",
-            )
-            .copy_dir("./magic_dir", "./inner/magic_dir", temp_dir)
-            .delete_file("./for_delete.txt", temp_dir)
-            .delete_dir("./for_delete_dir", temp_dir)
-            .move_file(
-                "./inner/created_file_transaction.txt",
-                "./inner/magic_dir/created_file_transaction.txt",
-            )
-            .create_dir("./for_moving")
+            .create_dir("./magic_dir");
+        // ... as do individual method calls on an instance.
+        tr.clone().write_file(
+            "./created_file_transaction.txt",
+            temp_dir,
+            b"Hello World".to_vec(),
+        );
+        tr.clone().append_file(
+            "./created_file_transaction.txt",
+            temp_dir,
+            b"Hello World".to_vec(),
+        );
+        tr.clone().copy_file(
+            "./created_file_transaction.txt",
+            "./inner/created_file_transaction.txt",
+        );
+        tr.clone()
+            .copy_dir("./magic_dir", "./inner/magic_dir", temp_dir);
+        tr.clone().delete_file("./for_delete.txt", temp_dir);
+        tr.clone().delete_dir("./for_delete_dir", temp_dir);
+        tr.clone().move_file(
+            "./inner/created_file_transaction.txt",
+            "./inner/magic_dir/created_file_transaction.txt",
+        );
+        tr.clone().create_dir("./for_moving");
+        tr.clone()
             .move_dir("./for_moving", "./inner/magic_dir/for_moving");
 
         assert_eq!((), tr.execute().expect("Cannot execute"));

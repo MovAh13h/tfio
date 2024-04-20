@@ -7,6 +7,7 @@ use std::{
 use crate::{copy_dir, DirectoryOperation, RollbackableOperation};
 
 /// Copies a file to destination
+#[derive(Clone)]
 pub struct CopyFile {
     source: PathBuf,
     dest: PathBuf,
@@ -36,6 +37,7 @@ impl RollbackableOperation for CopyFile {
 }
 
 /// Copies a directory to destination
+#[derive(Clone)]
 pub struct CopyDirectory {
     source: PathBuf,
     dest: PathBuf,

@@ -7,6 +7,7 @@ use std::{
 use crate::{DirectoryOperation, RollbackableOperation, SingleFileOperation};
 
 /// Deletes a file
+#[derive(Clone)]
 pub struct DeleteFile {
     source: PathBuf,
     temp_dir: PathBuf,
@@ -67,6 +68,7 @@ impl Drop for DeleteFile {
 }
 
 /// Deletes a directory
+#[derive(Clone)]
 pub struct DeleteDirectory {
     source: PathBuf,
     backup_path: PathBuf,
