@@ -2,3 +2,13 @@
 Cargo.lock
 /test
 /tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+*.swp
+*.swo
+.idea/
+.vscode/
