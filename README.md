@@ -1,7 +1,7 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/tfio-header-a-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="assets/tfio-header-a-light.svg">
-  <img alt="TFIO - Transactional File I/O" src="assets/tfio-header-a-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/MovAh13h/tfio/master/assets/tfio-header-a-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/MovAh13h/tfio/master/assets/tfio-header-a-light.svg">
+  <img alt="TFIO - Transactional File I/O" src="https://raw.githubusercontent.com/MovAh13h/tfio/master/assets/tfio-header-a-light.svg">
 </picture>
 
 ![tfio](https://github.com/MovAh13h/tfio/workflows/tfio/badge.svg)
