@@ -1,12 +1,13 @@
 use std::fs;
 use std::{
+    env,
     io,
     path::{Path, PathBuf},
 };
 
-use crate::{DirectoryOperation, RollbackableOperation, SingleFileOperation};
+use crate::{copy_dir, DirectoryOperation, RollbackableOperation, SingleFileOperation};
 
-/// Deletes a file
+/// Deletes a file (backed up so it can be restored on rollback).
 pub struct DeleteFile {
     source: PathBuf,
     temp_dir: PathBuf,
@@ -14,8 +15,13 @@ pub struct DeleteFile {
 }
 
 impl DeleteFile {
-    /// Constructs a new DeleteFile operation
-    pub fn new<S: AsRef<Path>, T: AsRef<Path>>(source: S, temp_dir: T) -> Self {
+    /// Constructs a new `DeleteFile` operation, using the OS temp directory for backups.
+    pub fn new<S: AsRef<Path>>(source: S) -> Self {
+        Self::with_temp_dir(source, env::temp_dir())
+    }
+
+    /// Constructs a new `DeleteFile` operation with a custom backup directory.
+    pub fn with_temp_dir<S: AsRef<Path>, T: AsRef<Path>>(source: S, temp_dir: T) -> Self {
         Self {
             source: source.as_ref().into(),
             temp_dir: temp_dir.as_ref().into(),
@@ -27,15 +33,14 @@ impl DeleteFile {
 impl RollbackableOperation for DeleteFile {
     fn execute(&mut self) -> io::Result<()> {
         self.create_backup_file()?;
-
         fs::remove_file(self.get_path())
     }
 
-    fn rollback(&self) -> io::Result<()> {
-        match fs::copy(self.get_backup_path(), self.get_path()) {
-            Ok(_v) => Ok(()),
-            Err(e) => Err(e),
+    fn rollback(&mut self) -> io::Result<()> {
+        if self.backup_path.as_os_str().is_empty() {
+            return Ok(());
         }
+        fs::copy(self.get_backup_path(), self.get_path()).map(|_| ())
     }
 }
 
@@ -48,8 +53,8 @@ impl SingleFileOperation for DeleteFile {
         &self.backup_path
     }
 
-    fn set_backup_path<S: AsRef<Path>>(&mut self, uuid: S) {
-        self.backup_path = uuid.as_ref().into();
+    fn set_backup_path<S: AsRef<Path>>(&mut self, path: S) {
+        self.backup_path = path.as_ref().into();
     }
 
     fn get_temp_dir(&self) -> &Path {
@@ -59,14 +64,13 @@ impl SingleFileOperation for DeleteFile {
 
 impl Drop for DeleteFile {
     fn drop(&mut self) {
-        match self.dispose() {
-            Err(e) => eprintln!("{}", e),
-            _ => {}
+        if let Err(e) = self.dispose() {
+            eprintln!("{}", e);
         }
     }
 }
 
-/// Deletes a directory
+/// Deletes a directory (backed up so it can be restored on rollback).
 pub struct DeleteDirectory {
     source: PathBuf,
     backup_path: PathBuf,
@@ -74,8 +78,13 @@ pub struct DeleteDirectory {
 }
 
 impl DeleteDirectory {
-    /// Constructs a new DeleteDirectory operation
-    pub fn new<S: AsRef<Path>, T: AsRef<Path>>(source: S, temp_dir: T) -> Self {
+    /// Constructs a new `DeleteDirectory` operation, using the OS temp directory for backups.
+    pub fn new<S: AsRef<Path>>(source: S) -> Self {
+        Self::with_temp_dir(source, env::temp_dir())
+    }
+
+    /// Constructs a new `DeleteDirectory` operation with a custom backup directory.
+    pub fn with_temp_dir<S: AsRef<Path>, T: AsRef<Path>>(source: S, temp_dir: T) -> Self {
         Self {
             source: source.as_ref().into(),
             temp_dir: temp_dir.as_ref().into(),
@@ -90,8 +99,18 @@ impl RollbackableOperation for DeleteDirectory {
         fs::remove_dir_all(&self.source)
     }
 
-    fn rollback(&self) -> io::Result<()> {
-        fs::rename(self.get_backup_path(), &self.source)
+    fn rollback(&mut self) -> io::Result<()> {
+        if self.backup_path.as_os_str().is_empty() {
+            return Ok(());
+        }
+        match fs::rename(self.get_backup_path(), &self.source) {
+            Ok(()) => Ok(()),
+            Err(e) if e.kind() == io::ErrorKind::CrossesDevices => {
+                copy_dir(self.get_backup_path(), &self.source)?;
+                fs::remove_dir_all(self.get_backup_path())
+            }
+            Err(e) => Err(e),
+        }
     }
 }
 
@@ -104,8 +123,8 @@ impl DirectoryOperation for DeleteDirectory {
         &self.backup_path
     }
 
-    fn set_backup_path<S: AsRef<Path>>(&mut self, uuid: S) {
-        self.backup_path = uuid.as_ref().into();
+    fn set_backup_path<S: AsRef<Path>>(&mut self, path: S) {
+        self.backup_path = path.as_ref().into();
     }
 
     fn get_temp_dir(&self) -> &Path {
@@ -115,64 +134,45 @@ impl DirectoryOperation for DeleteDirectory {
 
 impl Drop for DeleteDirectory {
     fn drop(&mut self) {
-        match self.dispose() {
-            Err(e) => eprintln!("{}", e),
-            _ => {}
+        if let Err(e) = self.dispose() {
+            eprintln!("{}", e);
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
+    use tempfile::tempdir;
+
     use super::*;
-    use std::fs::File;
-    use std::path::Path;
-
-    const FILE_SOURCE: &str = "./delete_file_source";
-    const TEMP_DIR: &str = "./tmp/";
-
-    fn file_setup() -> std::io::Result<()> {
-        match File::create(FILE_SOURCE) {
-            Ok(_f) => Ok(()),
-            Err(e) => Err(e),
-        }
-    }
 
     #[test]
-    #[allow(unused_must_use)]
     fn delete_file_works() {
-        assert_eq!((), file_setup().unwrap());
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("delete_me.txt");
+        fs::write(&file_path, b"data").unwrap();
 
-        let mut op = DeleteFile::new(FILE_SOURCE, TEMP_DIR);
-
-        assert_eq!(true, Path::new(FILE_SOURCE).exists());
-        assert_eq!((), op.execute().unwrap());
-        assert_eq!(false, Path::new(FILE_SOURCE).exists());
-        assert_eq!((), op.rollback().unwrap());
-        assert_eq!(true, Path::new(FILE_SOURCE).exists());
-
-        fs::remove_file(FILE_SOURCE);
-    }
-
-    const DIR_SOURCE: &str = "./delete_dir_source";
-
-    fn dir_setup() -> std::io::Result<()> {
-        fs::create_dir(DIR_SOURCE)
+        let mut op = DeleteFile::with_temp_dir(&file_path, dir.path());
+        assert!(file_path.exists());
+        op.execute().unwrap();
+        assert!(!file_path.exists());
+        op.rollback().unwrap();
+        assert!(file_path.exists());
     }
 
     #[test]
-    #[allow(unused_must_use)]
     fn delete_dir_works() {
-        assert_eq!((), dir_setup().unwrap());
+        let dir = tempdir().unwrap();
+        let target_dir = dir.path().join("delete_me_dir");
+        fs::create_dir(&target_dir).unwrap();
 
-        let mut op = DeleteDirectory::new(DIR_SOURCE, TEMP_DIR);
-
-        assert_eq!(true, Path::new(DIR_SOURCE).exists());
-        assert_eq!((), op.execute().unwrap());
-        assert_eq!(false, Path::new(DIR_SOURCE).exists());
-        assert_eq!((), op.rollback().unwrap());
-        assert_eq!(true, Path::new(DIR_SOURCE).exists());
-
-        fs::remove_dir_all(DIR_SOURCE);
+        let mut op = DeleteDirectory::with_temp_dir(&target_dir, dir.path());
+        assert!(target_dir.exists());
+        op.execute().unwrap();
+        assert!(!target_dir.exists());
+        op.rollback().unwrap();
+        assert!(target_dir.exists());
     }
 }

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" font-family="&#34;Space Grotesk&#34;, system-ui, -apple-system, &#34;Segoe UI&#34;, sans-serif">
+  <rect width="1280" height="320" fill="#1c1a17"></rect>
+  <g transform="translate(96 80) scale(1.3333)">
+    <rect x="22" y="22" width="84" height="20" fill="none" stroke="#f5f1ea" stroke-width="3" rx="3"></rect>
+    <rect x="28" y="50" width="84" height="20" fill="none" stroke="#f5f1ea" stroke-width="3" rx="3"></rect>
+    <rect x="34" y="78" width="84" height="20" fill="#c25d33" stroke="#f5f1ea" stroke-width="3" rx="3"></rect>
+  </g>
+  <line x1="338" y1="80" x2="338" y2="240" stroke="#f5f1ea" stroke-opacity="0.15" stroke-width="1"></line>
+  <text x="386" y="184" font-size="128" font-weight="600" fill="#f5f1ea" letter-spacing="-5">tfio</text>
+  <text x="386" y="232" font-size="22" fill="#a39787">A transaction-like interface over file I/O — for Rust.</text>
+</svg>
